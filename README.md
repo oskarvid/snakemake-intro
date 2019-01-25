@@ -4,7 +4,7 @@ You should be aware that there's probably ways of doing this more elegantly, but
 
 NB. Just pretend like it's doing something useful, much of it is simple placeholding to demonstrate the principles of the code, the input files and actual code that is executed is nonsensical at times.
 
-![snakemake-dag](https://raw.githubusercontent.com/oskarvid/snakemake-intro/master/dag.svg)
+![snakemake-dag](https://raw.githubusercontent.com/oskarvid/snakemake-intro/master/dag.png)
 
 ## Dependencies
 1. Docker - [Installation instructions](https://docs.docker.com/install/)  
