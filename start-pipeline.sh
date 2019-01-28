@@ -6,5 +6,4 @@ docker run \
 -w /data \
 oskarv/snakemake \
 snakemake -j \
---use-conda \
---use-singularity
+--use-conda
