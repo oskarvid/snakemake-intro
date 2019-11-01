@@ -1,4 +1,5 @@
 # Short intro to snakemake
+[![Travis Build Status](https://img.shields.io/travis/oskarvid/snakemake-intro.svg?logo=travis)](https://travis-ci.org/oskarvid/snakemake-intro)  
 This is a very short intro that should cover the absolute basics and give some inspiration about what's possible beyond the basics.  
 You should be aware that there's probably ways of doing this more elegantly, but this will run 100% and get you started. The [official snakemake documentation](https://snakemake.readthedocs.io/en/stable/) has more information about everything I've covered here.
 
