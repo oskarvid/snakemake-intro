@@ -11,7 +11,7 @@ NB. Just pretend like it's doing something useful, much of it is simple placehol
 2. oskarv/snakemake docker image - `sudo docker pull oskarv/snakemake`
 3. graphviz - Optional, necessary for creating nice graphs of the workflow like the one above.
 
-You can run the workflow with my docker image. You can also run the workflow with `Snakemake` installed locally, I haven't tested that so I don't know what the dependencies are. If this is your first introduction to Snakemake or docker it's time to start learning!
+You can run the workflow with my docker image. You can also run the workflow with `snakemake` installed locally, I haven't tested that so I don't know what the dependencies are. If this is your first introduction to Snakemake or docker it's time to start learning!
 
 ## How to run the workflow
 Run the start script like so: `./start-pipeline.sh`.  
