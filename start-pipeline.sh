@@ -3,6 +3,6 @@ docker run \
 -ti \
 -v $(pwd):/data \
 -w /data \
-oskarv/snakemake \
+snakemake/snakemake \
 snakemake -j \
 --use-conda
