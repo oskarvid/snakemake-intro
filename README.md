@@ -152,8 +152,9 @@ rule CondaBCFToolsMultipleParamsRule:
 		"bcftools {params.stats} {params.verbose} {input} > {output}"
 ```
 
-## Limiting the number of parallel processes
-Sometimes you have multiple files that need to be processed, but if you have limited compute resources you may only be able to process one file at a time. To limit the number of spawned processes you can use the `{threads}` directive. This will trick Snakemake into thinking that the rule will use 16 threads as in the example below.
+## Defining the number of threads for a rule
+Snakemake has nifty resource management features, one of them is the `threads` directive. With the `threads` directive you can inform a rule how many threads a tool can use. Using the `threads` directive also informs snakemake that this rule is using a certain amount of threads, and snakemake will limit the total number of parallel executions of this rule if the total requested number of threads is more than the total number of threads available to the system.  
+
 ```python
 rule MultipleThreadsRule:
 	input:
@@ -168,7 +169,8 @@ rule MultipleThreadsRule:
 	shell:
 		"pigz -p {threads} -c {input} > {output}"
 ```
-Let's assume our pretend server has 16 threads, Snakemake will assume that all threads are now in use and therefore only one process can be spawned. Even if the job in reality only uses one thread this can be useful if the job consumes too much RAM when you run two or more jobs at a time.
+
+Let's assume our pretend server has 12 threads, Snakemake will know that all threads are now in use and therefore only one process can be spawned. And no other rule can execute at the same time either since `pigz` is using all system threads already.
 
 ## Visualizing the workflow with a directed acyclical graph (dag)
 It is often very enlightening to get a graphical representation of the different workflow steps and how they relate to each other. Fortunately Snakemake has a built in way of producing what is called a directed acyclical graph, or dag for short. This is dependent on having `graphviz` installed. The basic command is `snakemake --dag` to just produce a raw "dot" output to the terminal. If you want to automagically create the graph you run `snakemake --dag | dot -Tsvg > dag.svg` after you have installed `graphviz`.  
