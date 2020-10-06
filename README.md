@@ -52,7 +52,7 @@ To run the workflow you need to execute `snakemake` from the directory where you
 ## Defining a variable in a tool rule
 Let's use the following rule to explain how to define a variable inside a tool rule:  
 ```python
-NUMBERARRAY = range(1, 4, 1)
+NUMBERARRAY = range(1, 4)
 rule MultipleInputsToOneToolRule:
 	input:
 		expand("outputs/first-rule-output-file-{file}", file=NUMBERARRAY),

@@ -1,5 +1,5 @@
 # Creates an array ranging from 1 to 3
-NUMBERARRAY = range(1, 4, 1)
+NUMBERARRAY = range(1, 4)
 
 rule all:
 	input:
