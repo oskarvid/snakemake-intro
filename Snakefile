@@ -6,8 +6,8 @@ rule all:
 		expand("inputs/input-file-{file}", file=NUMBERARRAY),
 		expand("outputs/compared-files-{file}", file=NUMBERARRAY),
 		expand("inputs/germline-{file}.vcf", file=NUMBERARRAY),
-		expand("outputs/bcftools-stats-{file}.output", file=NUMBERARRAY),
 		"outputs/bcftools-stats.output",
+		"outputs/compressed-germline-files.gz",
 
 rule BasicRule:
 	input:
@@ -81,17 +81,14 @@ rule CondaBCFToolsMultipleParamsRule:
 
 rule CondaBCFToolsMultipleThreadsRule:
 	input:
-		"inputs/germline-{file}.vcf",
+		expand("inputs/germline-{file}.vcf", file=NUMBERARRAY),
 	output:
-		"outputs/bcftools-stats-{file}.output",
+		"outputs/compressed-germline-files.gz",
 	conda:
-		"bcftools.yaml",
-	params:
-		stats = "stats",
-		verbose = "-v",
+		"pigz.yaml",
 	threads:
 		12
 	priority: 1
 	shell:
-		"bcftools {params.stats} {params.verbose} {input} > {output}"
+		"pigz -p {threads} -c {input} > {output}"
 
