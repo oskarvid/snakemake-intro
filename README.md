@@ -155,20 +155,18 @@ rule CondaBCFToolsMultipleParamsRule:
 ## Limiting the number of parallel processes
 Sometimes you have multiple files that need to be processed, but if you have limited compute resources you may only be able to process one file at a time. To limit the number of spawned processes you can use the `{threads}` directive. This will trick Snakemake into thinking that the rule will use 16 threads as in the example below.
 ```python
-rule CondaBCFToolsMultipleThreadsRule:
+rule MultipleThreadsRule:
 	input:
-		"inputs/germline-{file}.vcf",
+		expand("inputs/germline-{file}.vcf", file=NUMBERARRAY),
 	output:
-		"outputs/bcftools-stats-{file}.output",
+		"outputs/compressed-germline-files.gz",
 	conda:
-		"bcftools.yaml",
-	params:
-		stats = "stats",
-		verbose = "-v",
-	threads: 16
+		"pigz.yaml",
+	threads:
+		12
 	priority: 1
 	shell:
-		"bcftools {params.stats} {params.verbose} {input} > {output}"
+		"pigz -p {threads} -c {input} > {output}"
 ```
 Let's assume our pretend server has 16 threads, Snakemake will assume that all threads are now in use and therefore only one process can be spawned. Even if the job in reality only uses one thread this can be useful if the job consumes too much RAM when you run two or more jobs at a time.
 
