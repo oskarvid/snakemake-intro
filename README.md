@@ -67,7 +67,7 @@ Defining the variable in a tool rule will supply all input files at once. Contin
 ## Defining a variable in the `all` rule
 A variable is defined in the same way in the `all` rule as it is done in a tool rule, _i.e_ with `expand()` as shown in the example below.
 ```python
-NUMBERARRAY = range(1, 4, 1)
+NUMBERARRAY = range(1, 4)
 rule all:
 	input:
 		expand("inputs/input-file-{file}", file=NUMBERARRAY),
@@ -78,7 +78,7 @@ Defining a variable in the `all` rule is used to make tools run in parallel, tak
 1. Defining a variable in the `all` rule as shown below will run the rule once per input file. Snakemake can do this in parallel if you enable it by using the `-j` flag when you start the workflow.  
 
 ```python
-NUMBERARRAY = range(1, 4, 1)
+NUMBERARRAY = range(1, 4)
 rule all:
 	input:
 		expand("inputs/input-file-{file}", file=NUMBERARRAY),
