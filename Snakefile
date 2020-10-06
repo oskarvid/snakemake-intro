@@ -79,7 +79,7 @@ rule CondaBCFToolsMultipleParamsRule:
 	shell:
 		"bcftools {params.stats} {params.verbose} {input} > {output}"
 
-rule CondaBCFToolsMultipleThreadsRule:
+rule MultipleThreadsRule:
 	input:
 		expand("inputs/germline-{file}.vcf", file=NUMBERARRAY),
 	output:
