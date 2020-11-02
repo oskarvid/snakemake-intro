@@ -1,0 +1,156 @@
+# Creates an array ranging from 1 to 3
+NUMBERARRAY = range(1, 4)
+
+container: "docker://ubuntu:20.04"
+
+rule all:
+	input:
+		expand("outputs/niftyInputParallelOutputFile-{file}", file=NUMBERARRAY),
+		"outputs/combined-output-file.gz",
+		"outputs/bcftools-stats.output",
+		"outputs/germline.xcf",
+		"outputs/germline.vcf",
+		"outputs/niftyInputMultiOutputFile",
+		"outputs/funRuleOutputFile",
+		"outputs/niftyInputTwoInputs/flag",
+
+rule BasicRule:
+	input:
+		"inputs/basic-file",
+	output:
+		"outputs/modified-basic-file",
+	shell:
+		"cp {input} {output}"
+
+rule ParallelProcessingRule:
+	input:
+		"inputs/input-file-{file}",
+	output:
+		"outputs/first-rule-output-file-{file}",
+	shell:
+		"cp {input} {output}"
+
+rule MultipleInputsToOneToolRule:
+	input:
+		expand("outputs/first-rule-output-file-{file}", file=NUMBERARRAY),
+	output:
+		"outputs/combined-output-file.gz",
+	shell:
+		"gzip -c {input} > {output}"
+
+rule MoreThanOneFileAsInputRule:
+	input:
+		first = "outputs/modified-basic-file",
+		second = "outputs/first-rule-output-file-{file}",
+	output:
+		"outputs/compared-files-{file}",
+	shell:
+		"comm -12 <(sort {input.first}) <(sort {input.second}) > {output}"
+
+rule niftyInputParallel:
+	input:
+		rules.MoreThanOneFileAsInputRule.output,
+	output:
+		touch("outputs/niftyInputParallelOutputFile-{file}"),
+	shell:
+		"echo 'this is a placeholder for niftyParallel'"
+
+rule niftyInputMultiInput:
+	input:
+		expand(rules.MoreThanOneFileAsInputRule.output, file=NUMBERARRAY),
+	output:
+		touch("outputs/niftyInputMultiOutputFile"),
+	shell:
+		"echo 'this is a placeholder for niftyMulti'"
+
+rule SingularityBCFToolsRule:
+	input:
+		"inputs/germline.vcf",
+	output:
+		"outputs/germline.bcf",
+	container:
+		"shub://maehler/bcftools-singularity:1.9"
+	conda:
+		"bcftools.yaml",
+	shell:
+		"bcftools --version && echo 'This is a placeholder' && cat {input} > {output}"
+
+rule SingularityShowBCFToolsVersionWithParamsRule:
+	input:
+		"outputs/germline.bcf",
+	output:
+		"outputs/germline.xcf",
+	params:
+		"--version"
+	conda:
+		"bcftools.yaml",
+	priority: 3
+	shell:
+		"bcftools {params} && echo 'This is a placeholder' && cat {input} > {output}"
+
+rule SingularityBCFToolsMultipleParamsRule:
+	input:
+		"inputs/germline.vcf",
+	output:
+		"outputs/bcftools-stats.output",
+	conda:
+		"bcftools.yaml",
+	params:
+		stats = "stats",
+		verbose = "-v",
+	priority: 2
+	shell:
+		"bcftools {params.stats} {params.verbose} {input} > {output}"
+
+rule MultipleThreadsRule:
+	input:
+		expand("inputs/germline-{file}.vcf", file=NUMBERARRAY),
+	output:
+		"outputs/compressed-germline-files.gz",
+	threads:
+		12
+	conda:
+		"pigz.yaml"
+	priority: 1
+	shell:
+		"pigz -p {threads} -c {input} > {output}"
+
+rule wrapperRule:
+	input:
+		"outputs/germline.bcf"
+	output:
+		"outputs/germline.vcf"
+	conda:
+		"bcftools.yaml",
+	wrapper:
+		"0.67.0/bio/bcftools/view"
+
+rule dirAsOutput:
+	input:
+		rules.MultipleThreadsRule.output,
+	output:
+		dir = directory("outputs/dirAsOutputDirectory"),
+		flag = temp(touch("outputs/dirAsOutputDirectory/flag")),
+	shell:
+		"echo 'dirAsOutput rule placeholder'"
+
+rule niftyInputTwoInputs:
+	input:
+		dir = rules.dirAsOutput.output.dir,
+		flag = rules.dirAsOutput.output.flag,
+	output:
+		touch("outputs/niftyInputTwoInputs/flag"),
+	shell:
+		"echo 'this is another simple placeholder {input.dir} {input.flag}'"
+
+def simpleFunction():
+	path = "inputs/basic-file"
+	return path
+
+rule funAsInput:
+	input:
+		simpleFunction()
+	output:
+		"outputs/funRuleOutputFile",
+	shell:
+		"cp {input} {output}"

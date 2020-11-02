@@ -1,0 +1,368 @@
+# Short intro to snakemake
+[![Travis Build Status](https://img.shields.io/travis/oskarvid/snakemake-intro.svg?logo=travis)](https://travis-ci.org/oskarvid/snakemake-intro)  
+This is a very short intro that should cover the absolute basics and give some inspiration about what's possible beyond the basics.  
+You should be aware that there's probably ways of doing this more elegantly, but this will run 100% and get you started. The [official snakemake documentation](https://snakemake.readthedocs.io/en/stable/) has more information about everything I've covered here.
+
+NB. Just pretend like it's doing something useful, much of it is simple placeholding to demonstrate the principles of the code, the input files and actual code that is executed is nonsensical at times.
+
+![snakemake-dag](https://raw.githubusercontent.com/oskarvid/snakemake-intro/master/dag.png)
+
+## Dependencies for the conda version
+1. Miniconda - [Installation instructions](https://docs.conda.io/en/latest/miniconda.html)  
+2. pip3 - `sudo apt install python3-pip`  
+3. Singularity - [Installation instructions](https://sylabs.io/guides/3.6/user-guide/quick_start.html#quick-installation-steps) - Optional  
+4. graphviz - Optional, necessary for creating nice graphs of the workflow  
+
+## Install snakemake and virtualenv  
+`pip3 install --user snakemake virtualenv`  
+
+## How to run the workflow  
+You can run it in two ways if you also installed Singularity.  
+1. snakemake -j --use-conda  
+1.1 This will use your local installation of conda  
+2. snakemake -j --use-conda --use-singularity  
+2.1 This will run each rule using a miniconda docker image that gets converted to a singularity image  
+
+# Explaining the basics of the rules in the Snakefile
+## A very very basic rule
+The following rule is the most basic rule you can make, it has an input file, an output file and a shell command.
+```python
+rule BasicRule: # rule name
+	input: # input directive
+		"inputs/basic-file", # input file
+	output: # output directive
+		"outputs/modified-basic-file", # output file
+	shell: # shell directive
+		"cp {input} {output}" # shell command
+```
+The magic that happens is that instead of writing `cp inputs/basic-file outputs/modified-basic-file` we use the `{input}` and `{output}` snakemake representations of the file paths that are specified under the `input` and `output` directives.
+
+## Creating the `all` rule
+Every Snakefile needs an `all` rule. Without an input file to the `all` rule the workflow won't run. If you have only one tool rule, the output from this tool rule is the input to the `all` rule. Given our very very basic tool rule above, a complete minimal Snakefile would look like this:  
+```python
+rule all:
+	input:
+		"outputs/modified-basic-file"
+
+rule BasicRule:
+	input:
+		"inputs/basic-file",
+	output:
+		"outputs/modified-basic-file",
+	shell:
+		"cp {input} {output}"
+```
+To run the workflow you need to execute `snakemake` from the directory where your Snakefile is located, and given that the input file exists, snakemake will create the output directory when it executes the code in the `shell` directive and copy the input file to the file specified in the `{output}` directive.
+
+## Defining a variable in a tool rule
+Let's use the following rule to explain how to define a variable inside a tool rule:  
+```python
+NUMBERARRAY = range(1, 4)
+rule MultipleInputsToOneToolRule:
+	input:
+		expand("outputs/first-rule-output-file-{file}", file=NUMBERARRAY),
+	output:
+		"outputs/combined-output-file.gz",
+	shell:
+		"gzip -c {input} > {output}"
+```
+A tool rule doesn't know what the variable `{file}` means unless you define it somehow, we use `expand("outputs/first-rule-output-file-{file}", file=NUMBERARRAY)` to define the `{file}` variable. In this rule `{file}` is defined in the tool rule, but depending on the desired behavior `{file}` can also be defined in the `all` rule as explained below.  
+Defining the variable in a tool rule will supply all input files at once. Continue reading to get an explanation of when to define a variable in a tool rule or in the `all` rule.
+
+## Defining a variable in the `all` rule
+A variable is defined in the same way in the `all` rule as it is done in a tool rule, _i.e_ with `expand()` as shown in the example below.
+```python
+NUMBERARRAY = range(1, 4)
+rule all:
+	input:
+		expand("inputs/input-file-{file}", file=NUMBERARRAY),
+```
+Defining a variable in the `all` rule is used to make tools run in parallel, taking one input file per spawned process.
+
+## When to define a variable in the `all` rule or a tool rule
+1. Defining a variable in the `all` rule as shown below will run the rule once per input file. Snakemake can do this in parallel if you enable it by using the `-j` flag when you start the workflow.  
+
+```python
+NUMBERARRAY = range(1, 4)
+rule all:
+	input:
+		expand("inputs/input-file-{file}", file=NUMBERARRAY),
+
+rule ParallelProcessingRule:
+	input:
+		"inputs/input-file-{file}",
+	output:
+		"outputs/first-rule-output-file-{file}",
+	shell:
+		"cp {input} {output}"
+```
+2. Defining a variable in a tool rule will use the variable to expand the file path and supply all input files _at once_. In the `MultipleInputsToOneToolRule` rule example above, the rule will take all files that match the pattern `outputs/first-rule-output-file-{1,2,3}` and run `gzip -c` to create a .gz archive of all input files.  
+
+## Using two or more input or output files for a rule
+Some tools take two or more input files as shown in the example below.
+```python
+rule MoreThanOneFileAsInputRule:
+	input:
+		first = "outputs/modified-basic-file",
+		second = "outputs/first-rule-output-file-{file}",
+	output:
+		"outputs/compared-files-{file}",
+	shell:
+		"comm -12 <(sort {input.first}) <(sort {input.second}) > {output}"
+```
+The input files are selected by writing `{input.first}` and `{input.second}`. You can have multiple `{output}` files as well, just use the same syntax as shown in the `input` directive. This particular rule will compare each `outputs/first-rule-output-file-*` file with the `outputs/modified-basic-file` file and output the lines that are the same into the `outputs/compared-files-{file}` file. 
+
+## Installing exact tool versions with Conda
+Tools can be installed in a virtual environment automatically by using `conda` as shown in the example below.
+```python
+rule CondaInstallBCFToolsRule:
+	input:
+		"inputs/germline.vcf",
+	conda:
+		"bcftools.yaml"
+	output:
+		"outputs/germline.bcf",
+	shell:
+		"bcftools --version && echo 'This is a placeholder' && cat {input} > {output}"
+```
+It is the `conda:` directive that is responsible for this magic, and as shown it is necessary to define the tool version etc in a yaml file as shown below.
+```yaml
+name: bcftools
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - bcftools=1.9
+```
+The tool will get installed in a separate virtual environment.
+
+## Using the parameter directive
+Sometimes it is desireable to use variables or config files* to define parameters, or to just simply make the `shell` directive code cleaner if one so wishes. The syntax is the same as for `{input}` and `{output}`, either just write `{params}` or `{params.something}` if you have more than one parameter like in the example below.
+\*Config files are not covered in this intro, check out the official documentation in the link above for more information.
+
+```python
+rule CondaBCFToolsMultipleParamsRule:
+	input:
+		"inputs/germline.vcf",
+	output:
+		"outputs/bcftools-stats.output",
+	conda:
+		"bcftools.yaml",
+	params:
+		stats = "stats",
+		verbose = "-v",
+	priority: 2
+	shell:
+		"bcftools {params.stats} {params.verbose} {input} > {output}"
+```
+
+## Defining the number of threads for a rule
+Snakemake has nifty resource management features, one of them is the `threads` directive. With the `threads` directive you can inform a rule how many threads a tool can use. Using the `threads` directive also informs snakemake that this rule is using a certain amount of threads, and snakemake will limit the total number of parallel executions of this rule if the total requested number of threads is more than the total number of threads available to the system.  
+
+```python
+rule MultipleThreadsRule:
+	input:
+		expand("inputs/germline-{file}.vcf", file=NUMBERARRAY),
+	output:
+		"outputs/compressed-germline-files.gz",
+	conda:
+		"pigz.yaml",
+	threads:
+		12
+	priority: 1
+	shell:
+		"pigz -p {threads} -c {input} > {output}"
+```
+
+Let's assume our pretend server has 12 threads, Snakemake will know that all threads are now in use and therefore only one process can be spawned. And no other rule can execute at the same time either since `pigz` is using all system threads already.
+
+## Using rule dependencies, running a rule that only produces a directory as output and using the temp() function
+This example demonstrates two features, the first one is that you can refer to the output 
+from another rule using the syntax `rules.rulename.output` instead of writing the full file path. 
+This is even possible if you need to use the `expand()` function, you simply use the `rules.rulename.output` 
+line instead of the file path like you would otherwise.  
+The second demonstration in this example is that you can mark an output as a directory, this is 
+necessary because snakemake by default assumes that an output is a file, so when the rule finishes 
+and snakemake does not find a file it thinks that the rule failed, when in reality it didn't. 
+In order to make it work you still need to trick snakemake using the `touch()` function. 
+This function will create an empty file that snakemake will see and interprets this as a successful 
+execution of the rule. But because we are not interested in keeping it we use a final function 
+called `temp()` which will delete a file once it has been used as input in all subsequent rules, if any. 
+
+```python
+rule dirAsOutput:
+	input:
+		rules.MultipleThreadsRule.output,
+	output:
+		dir = directory("outputs/dirAsOutputDirectory"),
+		flag = temp(touch("outputs/dirAsOutputDirectory/flag")),
+	shell:
+		"echo 'dirAsOutput rule placeholder'"
+```
+
+## Predefined tool wrappers
+Snakemake has a [github repository](https://github.com/snakemake/snakemake-wrappers/tree/0.66.0) that 
+contains a lot of tool wrappers that allow users to copy/paste a predefined wrapper into a tool rule. These wrappers remove the need 
+to write the tool command in a `shell` directive because this is already done by the wrapper. Wrappers often include an easy way to 
+add parameters to the command line. 
+
+```python
+rule wrapperRule:
+	input:
+		"outputs/germline.bcf"
+	output:
+		"outputs/germline.vcf"
+	conda:
+		"bcftools.yaml",
+	wrapper:
+		"0.66.0/bio/bcftools/view"
+```
+
+## Functions as input  
+Under some circumstances it comes in handy to be able to use a function as input to a rule, the example below shows a very simple 
+proof of principle representation of how this works. 
+
+```python
+def funAsInput():
+	path = "outputs/modified-basic-file",
+	return path
+
+rule funRule:
+	input:
+		funAsInput()
+	output:
+		"outputs/funRuleOutputFile",
+	shell:
+		"cp {input} {output}"
+```
+
+## Visualizing the workflow with a directed acyclical graph (dag)
+It is often very enlightening to get a graphical representation of the different workflow steps and how they relate to each other. Fortunately Snakemake has a built in way of producing what is called a directed acyclical graph, or dag for short. This is dependent on having `graphviz` installed. The basic command is `snakemake --dag` to just produce a raw "dot" output to the terminal. If you want to automagically create the graph you run `snakemake --dag | dot -Tsvg > dag.svg` after you have installed `graphviz`.  
+Here is an example of a graph I created for another workflow: https://raw.githubusercontent.com/neicnordic/GRSworkflow/optimized/.GRSworkflowDAG.png  
+This workflow wasn't written in Snakemake though, I simply created a logical representation of the steps in Snakemake only so I could make this graph.  
+Here's another graph from a germline variant calling pipeline: https://github.com/oskarvid/snakemake_germline/blob/master/dag.png
+
+## Further reading
+Using the examples in this short introduction should get you started, make sure to hone your Google skills to figure out what's wrong or how to do things better when you're building your first Snakemake workflow. The official documentation is always a good place to look.  
+You can take a look at our [germline variant calling workflow](https://github.com/elixir-no-nels/snakemake_germline) built in Snakemake for a real life example of what can be achieved with Snakemake.  
+
+
+
+# Creates an array ranging from 1 to 3
+
+rule all:
+	input:
+		expand("outputs/niftyInputParallelOutputFile-{file}", file=NUMBERARRAY),
+		"outputs/combined-output-file.gz",
+		"outputs/bcftools-stats.output",
+		"outputs/compressed-germline-files.gz",
+		"outputs/germline.xcf",
+		"outputs/niftyInputMultiOutputFile",
+		"outputs/dirAsOutputDirectory/flag",
+		"outputs/funRuleOutputFile",
+
+container: "docker://continuumio/miniconda3:4.4.10"
+
+
+
+```python
+NUMBERARRAY = range(1, 4)
+
+rule MultipleInputsToOneToolRule:
+	input:
+		expand("outputs/first-rule-output-file-{file}", file=NUMBERARRAY),
+	output:
+		"outputs/combined-output-file.gz",
+	shell:
+		"gzip -c {input} > {output}"
+```
+
+```python
+rule MoreThanOneFileAsInputRule:
+	input:
+		first = "outputs/modified-basic-file",
+		second = "outputs/first-rule-output-file-{file}",
+	output:
+		"outputs/compared-files-{file}",
+	shell:
+		"comm -12 <(sort {input.first}) <(sort {input.second}) > {output}"
+```
+
+```python
+rule niftyInputParallel:
+	input:
+		rules.MoreThanOneFileAsInputRule.output,
+	output:
+		touch("outputs/niftyInputParallelOutputFile-{file}"),
+	shell:
+		"echo 'this is a placeholder for niftyParallel'"
+```
+
+```python
+rule niftyInputMultiInput:
+	input:
+		expand(rules.MoreThanOneFileAsInputRule.output, file=NUMBERARRAY),
+	output:
+		touch("outputs/niftyInputMultiOutputFile"),
+	shell:
+		"echo 'this is a placeholder for niftyMulti'"
+```
+
+```python
+rule CondaInstallBCFToolsRule:
+	input:
+		"inputs/germline.vcf",
+	output:
+		"outputs/germline.bcf",
+	conda:
+		"bcftools.yaml"
+	shell:
+		"bcftools --version && echo 'This is a placeholder' && cat {input} > {output}"
+```
+
+```python
+rule SingularityShowBCFToolsVersionWithParamsRule:
+	input:
+		"outputs/germline.bcf",
+	output:
+		"outputs/germline.xcf",
+	conda:
+		"bcftools.yaml"
+	params:
+		"--version"
+	priority: 3
+	shell:
+		"bcftools {params} && echo 'This is a placeholder' && cat {input} > {output}"
+```
+
+```python
+rule SingularityBCFToolsMultipleParamsRule:
+	input:
+		"inputs/germline.vcf",
+	output:
+		"outputs/bcftools-stats.output",
+	conda:
+		"bcftools.yaml"
+	params:
+		stats = "stats",
+		verbose = "-v",
+	priority: 2
+	shell:
+		"bcftools {params.stats} {params.verbose} {input} > {output}"
+```
+
+```python
+rule MultipleThreadsRule:
+	input:
+		expand("inputs/germline-{file}.vcf", file=NUMBERARRAY),
+	output:
+		"outputs/compressed-germline-files.gz",
+	threads:
+		12
+	conda:
+		"pigz.yaml"
+	priority: 1
+	shell:
+		"pigz -p {threads} -c {input} > {output}"
+```

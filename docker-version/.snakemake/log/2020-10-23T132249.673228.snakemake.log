@@ -1,0 +1,264 @@
+Building DAG of jobs...
+Creating conda environment bcftools.yaml...
+Downloading and installing remote packages.
+Environment for bcftools.yaml created (location: .snakemake/conda/75cc4935)
+Creating conda environment pigz.yaml...
+Downloading and installing remote packages.
+Environment for pigz.yaml created (location: .snakemake/conda/5486324d)
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Singularity containers: ignored
+Job counts:
+	count	jobs
+	1	BasicRule
+	3	MoreThanOneFileAsInputRule
+	1	MultipleInputsToOneToolRule
+	1	MultipleThreadsRule
+	3	ParallelProcessingRule
+	1	SingularityBCFToolsMultipleParamsRule
+	1	SingularityBCFToolsRule
+	1	SingularityShowBCFToolsVersionWithParamsRule
+	1	all
+	1	dirAsOutput
+	1	funAsInput
+	1	niftyInputMultiInput
+	3	niftyInputParallel
+	1	niftyInputTwoInputs
+	1	wrapperRule
+	21
+
+[Fri Oct 23 13:23:45 2020]
+rule ParallelProcessingRule:
+    input: inputs/input-file-3
+    output: outputs/first-rule-output-file-3
+    jobid: 16
+    wildcards: file=3
+
+
+[Fri Oct 23 13:23:45 2020]
+rule ParallelProcessingRule:
+    input: inputs/input-file-1
+    output: outputs/first-rule-output-file-1
+    jobid: 14
+    wildcards: file=1
+
+
+[Fri Oct 23 13:23:45 2020]
+rule ParallelProcessingRule:
+    input: inputs/input-file-2
+    output: outputs/first-rule-output-file-2
+    jobid: 15
+    wildcards: file=2
+
+[Fri Oct 23 13:23:45 2020]
+Finished job 16.
+1 of 21 steps (5%) done
+
+[Fri Oct 23 13:23:45 2020]
+rule SingularityBCFToolsMultipleParamsRule:
+    input: inputs/germline.vcf
+    output: outputs/bcftools-stats.output
+    jobid: 5
+    priority: 2
+
+[Fri Oct 23 13:23:45 2020]
+Finished job 14.
+2 of 21 steps (10%) done
+[Fri Oct 23 13:23:45 2020]
+Finished job 15.
+3 of 21 steps (14%) done
+
+[Fri Oct 23 13:23:45 2020]
+rule funAsInput:
+    input: inputs/basic-file
+    output: outputs/funRuleOutputFile
+    jobid: 9
+
+
+[Fri Oct 23 13:23:45 2020]
+rule SingularityBCFToolsRule:
+    input: inputs/germline.vcf
+    output: outputs/germline.bcf
+    jobid: 17
+
+[Fri Oct 23 13:23:45 2020]
+Finished job 9.
+4 of 21 steps (19%) done
+
+[Fri Oct 23 13:23:45 2020]
+rule MultipleInputsToOneToolRule:
+    input: outputs/first-rule-output-file-1, outputs/first-rule-output-file-2, outputs/first-rule-output-file-3
+    output: outputs/combined-output-file.gz
+    jobid: 4
+
+[Fri Oct 23 13:23:45 2020]
+Finished job 4.
+5 of 21 steps (24%) done
+
+[Fri Oct 23 13:23:45 2020]
+rule BasicRule:
+    input: inputs/basic-file
+    output: outputs/modified-basic-file
+    jobid: 19
+
+[Fri Oct 23 13:23:45 2020]
+Finished job 19.
+6 of 21 steps (29%) done
+
+[Fri Oct 23 13:23:45 2020]
+rule MoreThanOneFileAsInputRule:
+    input: outputs/modified-basic-file, outputs/first-rule-output-file-1
+    output: outputs/compared-files-1
+    jobid: 11
+    wildcards: file=1
+
+
+[Fri Oct 23 13:23:45 2020]
+rule MoreThanOneFileAsInputRule:
+    input: outputs/modified-basic-file, outputs/first-rule-output-file-3
+    output: outputs/compared-files-3
+    jobid: 13
+    wildcards: file=3
+
+[Fri Oct 23 13:23:45 2020]
+Finished job 11.
+7 of 21 steps (33%) done
+[Fri Oct 23 13:23:45 2020]
+Finished job 13.
+8 of 21 steps (38%) done
+
+[Fri Oct 23 13:23:45 2020]
+rule niftyInputParallel:
+    input: outputs/compared-files-3
+    output: outputs/niftyInputParallelOutputFile-3
+    jobid: 3
+    wildcards: file=3
+
+
+[Fri Oct 23 13:23:45 2020]
+rule MoreThanOneFileAsInputRule:
+    input: outputs/modified-basic-file, outputs/first-rule-output-file-2
+    output: outputs/compared-files-2
+    jobid: 12
+    wildcards: file=2
+
+Touching output file outputs/niftyInputParallelOutputFile-3.
+[Fri Oct 23 13:23:45 2020]
+Finished job 3.
+9 of 21 steps (43%) done
+[Fri Oct 23 13:23:45 2020]
+Finished job 12.
+10 of 21 steps (48%) done
+
+[Fri Oct 23 13:23:45 2020]
+rule niftyInputParallel:
+    input: outputs/compared-files-1
+    output: outputs/niftyInputParallelOutputFile-1
+    jobid: 1
+    wildcards: file=1
+
+Touching output file outputs/niftyInputParallelOutputFile-1.
+[Fri Oct 23 13:23:45 2020]
+Finished job 1.
+11 of 21 steps (52%) done
+
+[Fri Oct 23 13:23:45 2020]
+rule niftyInputMultiInput:
+    input: outputs/compared-files-1, outputs/compared-files-2, outputs/compared-files-3
+    output: outputs/niftyInputMultiOutputFile
+    jobid: 8
+
+Touching output file outputs/niftyInputMultiOutputFile.
+[Fri Oct 23 13:23:45 2020]
+Finished job 8.
+12 of 21 steps (57%) done
+
+[Fri Oct 23 13:23:45 2020]
+rule niftyInputParallel:
+    input: outputs/compared-files-2
+    output: outputs/niftyInputParallelOutputFile-2
+    jobid: 2
+    wildcards: file=2
+
+Touching output file outputs/niftyInputParallelOutputFile-2.
+[Fri Oct 23 13:23:45 2020]
+Finished job 2.
+13 of 21 steps (62%) done
+Activating conda environment: /data/.snakemake/conda/75cc4935
+Activating conda environment: /data/.snakemake/conda/75cc4935
+[Fri Oct 23 13:23:45 2020]
+Finished job 5.
+14 of 21 steps (67%) done
+[Fri Oct 23 13:23:45 2020]
+Finished job 17.
+15 of 21 steps (71%) done
+
+[Fri Oct 23 13:23:45 2020]
+rule SingularityShowBCFToolsVersionWithParamsRule:
+    input: outputs/germline.bcf
+    output: outputs/germline.xcf
+    jobid: 6
+    priority: 3
+
+
+[Fri Oct 23 13:23:45 2020]
+rule wrapperRule:
+    input: outputs/germline.bcf
+    output: outputs/germline.vcf
+    jobid: 7
+
+Activating conda environment: /data/.snakemake/conda/75cc4935
+[Fri Oct 23 13:23:46 2020]
+Finished job 6.
+16 of 21 steps (76%) done
+Activating conda environment: /data/.snakemake/conda/75cc4935
+[Fri Oct 23 13:23:47 2020]
+Finished job 7.
+17 of 21 steps (81%) done
+
+[Fri Oct 23 13:23:47 2020]
+rule MultipleThreadsRule:
+    input: inputs/germline-1.vcf, inputs/germline-2.vcf, inputs/germline-3.vcf
+    output: outputs/compressed-germline-files.gz
+    jobid: 20
+    priority: 1
+    threads: 4
+
+Activating conda environment: /data/.snakemake/conda/5486324d
+[Fri Oct 23 13:23:48 2020]
+Finished job 20.
+18 of 21 steps (86%) done
+
+[Fri Oct 23 13:23:48 2020]
+rule dirAsOutput:
+    input: outputs/compressed-germline-files.gz
+    output: outputs/dirAsOutputDirectory, outputs/dirAsOutputDirectory/flag
+    jobid: 18
+
+Touching output file outputs/dirAsOutputDirectory/flag.
+[Fri Oct 23 13:23:48 2020]
+Finished job 18.
+19 of 21 steps (90%) done
+
+[Fri Oct 23 13:23:48 2020]
+rule niftyInputTwoInputs:
+    input: outputs/dirAsOutputDirectory, outputs/dirAsOutputDirectory/flag
+    output: outputs/niftyInputTwoInputs/flag
+    jobid: 10
+
+Touching output file outputs/niftyInputTwoInputs/flag.
+Removing temporary output file outputs/dirAsOutputDirectory/flag.
+[Fri Oct 23 13:23:48 2020]
+Finished job 10.
+20 of 21 steps (95%) done
+
+[Fri Oct 23 13:23:48 2020]
+localrule all:
+    input: outputs/niftyInputParallelOutputFile-1, outputs/niftyInputParallelOutputFile-2, outputs/niftyInputParallelOutputFile-3, outputs/combined-output-file.gz, outputs/bcftools-stats.output, outputs/germline.xcf, outputs/germline.vcf, outputs/niftyInputMultiOutputFile, outputs/funRuleOutputFile, outputs/niftyInputTwoInputs/flag
+    jobid: 0
+
+[Fri Oct 23 13:23:48 2020]
+Finished job 0.
+21 of 21 steps (100%) done
+Complete log: /data/.snakemake/log/2020-10-23T132249.673228.snakemake.log
